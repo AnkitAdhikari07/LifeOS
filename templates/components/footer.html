@@ -1,0 +1,141 @@
+<style>
+  footer.lifeos-footer {
+    background: var(--bg-panel, #181736);
+    border-top: 1px solid var(--line, #2A2952);
+  }
+
+  .footer-heading {
+    color: var(--text-soft, #C7C4E6);
+    font-weight: 600;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .footer-link {
+    color: var(--text-dim, #7C79A6);
+    font-size: 0.9rem;
+    transition: color 0.2s ease, padding-left 0.2s ease;
+    display: inline-block;
+  }
+  .footer-link:hover {
+    color: var(--text-soft, #C7C4E6);
+    padding-left: 4px;
+  }
+
+  .footer-signal-dot {
+    width: 7px; height: 7px; border-radius: 999px;
+    background: var(--teal, #5EEAD4);
+    box-shadow: 0 0 0 0 rgba(94,234,212,0.6);
+    animation: footer-pulse 2.4s infinite;
+  }
+  @keyframes footer-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(94,234,212,0.55); }
+    70%  { box-shadow: 0 0 0 6px rgba(94,234,212,0); }
+    100% { box-shadow: 0 0 0 0 rgba(94,234,212,0); }
+  }
+
+  .status-panel {
+    background: var(--bg-deep, #11102B);
+    border: 1px solid var(--line, #2A2952);
+  }
+
+  .status-row {
+    color: var(--text-dim, #7C79A6);
+    font-size: 0.78rem;
+  }
+  .status-value { color: var(--teal, #5EEAD4); }
+
+  .footer-bottom {
+    border-top: 1px solid var(--line, #2A2952);
+  }
+
+  .footer-social {
+    color: var(--text-dim, #7C79A6);
+    border: 1px solid var(--line, #2A2952);
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+  .footer-social:hover {
+    color: var(--amber, #FFB454);
+    border-color: var(--amber, #FFB454);
+  }
+</style>
+
+<footer class="lifeos-footer">
+  <div class="max-w-7xl mx-auto px-5 md:px-8 py-12">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-10">
+
+      <!-- Brand -->
+      <div class="md:col-span-1">
+        <div class="flex items-center gap-2.5 mb-3">
+          <span class="footer-signal-dot"></span>
+          <h2 class="font-display text-lg font-bold tracking-tight" style="color: var(--text-soft, #C7C4E6);">
+            Life<span style="color: var(--amber, #FFB454);">OS</span>
+          </h2>
+        </div>
+        <p class="text-sm leading-relaxed" style="color: var(--text-dim, #7C79A6); max-width: 26ch;">
+          One operating system for the parts of life that don't fit in a single app.
+        </p>
+      </div>
+
+      <!-- Modules -->
+      <div>
+        <h3 class="footer-heading mb-4">Modules</h3>
+        <ul class="space-y-2.5">
+          <li><a href="#" class="footer-link">Dashboard</a></li>
+          <li><a href="#" class="footer-link">Tasks</a></li>
+          <li><a href="#" class="footer-link">Notes</a></li>
+          <li><a href="#" class="footer-link">Budget</a></li>
+          <li><a href="#" class="footer-link">Travel</a></li>
+          <li><a href="#" class="footer-link">Timetable</a></li>
+        </ul>
+      </div>
+
+      <!-- Resources -->
+      <div>
+        <h3 class="footer-heading mb-4">Resources</h3>
+        <ul class="space-y-2.5">
+          <li><a href="#" class="footer-link">Help centre</a></li>
+          <li><a href="#" class="footer-link">Changelog</a></li>
+          <li><a href="#" class="footer-link">Privacy policy</a></li>
+          <li><a href="#" class="footer-link">Terms of use</a></li>
+          <li><a href="#" class="footer-link">Contact</a></li>
+        </ul>
+      </div>
+
+      <!-- System status panel -->
+      <div>
+        <h3 class="footer-heading mb-4">System</h3>
+        <div class="status-panel rounded-lg px-4 py-3 space-y-2 font-mono">
+          <div class="flex justify-between status-row">
+            <span>status</span>
+            <span class="status-value">operational</span>
+          </div>
+          <div class="flex justify-between status-row">
+            <span>version</span>
+            <span class="status-value">v1.0.0</span>
+          </div>
+          <div class="flex justify-between status-row">
+            <span>uptime</span>
+            <span class="status-value">99.9%</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bottom bar -->
+  <div class="footer-bottom">
+    <div class="max-w-7xl mx-auto px-5 md:px-8 py-5 flex flex-col md:flex-row justify-between items-center gap-4">
+      <p class="font-mono text-xs" style="color: var(--text-dim, #7C79A6);">
+        &copy; {% now "Y" %} LifeOS. All rights reserved.
+      </p>
+      <div class="flex items-center gap-3">
+        <a href="#" class="footer-social rounded-full w-8 h-8 flex items-center justify-center text-xs" aria-label="GitHub">GH</a>
+        <a href="#" class="footer-social rounded-full w-8 h-8 flex items-center justify-center text-xs" aria-label="Twitter / X">X</a>
+        <a href="#" class="footer-social rounded-full w-8 h-8 flex items-center justify-center text-xs" aria-label="Email">@</a>
+      </div>
+    </div>
+  </div>
+</footer>   
