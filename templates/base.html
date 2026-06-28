@@ -4,28 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>
-        {% block title%}
-        LifeOS
-        {% endblock %}
-    </title>
+    <title>{% block title %}LifeOS{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/output.css' %}">
+    {% block extra_css %}{% endblock %}
 </head>
-<body>
-    <!--Navbar-->
+<body style="background:#11102B; margin:0;">
     {% include 'components/navbar.html' %}
-
-    <!--Content-->
     <main>
-        {% block content %}
-            <h1>Hello LifeOS</h1>
-        {% endblock %}
+        {% block content %}{% endblock %}
     </main>
-
-    <!--Footer-->
     {% include 'components/footer.html' %}
-
 </body>
 </html>

@@ -1,1 +1,515 @@
 {% extends 'base.html' %}
+
+{% block title %}Dashboard — LifeOS{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── Bouncing balls ── */
+  .ball {
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    filter: blur(60px);
+    animation: bounce linear infinite;
+  }
+  @keyframes bounce {
+    0%   { transform: translate(0, 0); }
+    25%  { transform: translate(var(--tx1), var(--ty1)); }
+    50%  { transform: translate(var(--tx2), var(--ty2)); }
+    75%  { transform: translate(var(--tx3), var(--ty3)); }
+    100% { transform: translate(0, 0); }
+  }
+
+  /* ── Glass cards ── */
+  .glass-card {
+    background: rgba(24, 23, 54, 0.75);
+    border: 1px solid rgba(94, 234, 212, 0.08);
+    border-radius: 1.25rem;
+    backdrop-filter: blur(14px);
+  }
+
+  /* ── Stat cards ── */
+  .stat-card {
+    background: rgba(30, 28, 66, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 1.25rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.25s ease, border-color 0.25s ease;
+    cursor: default;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 110px; height: 110px;
+    border-radius: 50%;
+    opacity: 0.08;
+    transition: opacity 0.25s ease;
+  }
+  .stat-card:hover { transform: translateY(-3px); border-color: rgba(255,180,84,0.3); }
+  .stat-card:hover::before { opacity: 0.18; }
+  .stat-card.amber::before { background: #FFB454; }
+  .stat-card.teal::before  { background: #5EEAD4; }
+  .stat-card.purple::before{ background: #A78BFA; }
+  .stat-card.red::before   { background: #F87171; }
+
+  /* ── Micro bar ── */
+  .micro-bar {
+    height: 3px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.06);
+    margin-top: 0.75rem;
+    overflow: hidden;
+  }
+  .micro-bar-fill { height: 100%; border-radius: 999px; }
+
+  /* ── Quick action cards ── */
+  .quick-card {
+    background: rgba(30, 28, 66, 0.85);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 1.1rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem 1rem;
+    gap: 0.5rem;
+    backdrop-filter: blur(10px);
+  }
+  .quick-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    border-radius: 0 0 1.1rem 1.1rem;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+  .quick-card:hover {
+    transform: translateY(-4px);
+    background: rgba(40, 36, 90, 0.95);
+  }
+  .quick-card:hover::after { opacity: 1; }
+
+  .quick-card.q-amber:hover { border-color: rgba(255,180,84,0.4); }
+  .quick-card.q-amber::after { background: #FFB454; }
+
+  .quick-card.q-teal:hover  { border-color: rgba(94,234,212,0.4); }
+  .quick-card.q-teal::after  { background: #5EEAD4; }
+
+  .quick-card.q-purple:hover{ border-color: rgba(167,139,250,0.4); }
+  .quick-card.q-purple::after{ background: #A78BFA; }
+
+  .quick-card.q-red:hover   { border-color: rgba(248,113,113,0.4); }
+  .quick-card.q-red::after   { background: #F87171; }
+
+  .quick-icon {
+    width: 42px; height: 42px;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    margin-bottom: 0.1rem;
+  }
+
+  /* ── Schedule ── */
+  .schedule-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.875rem 1rem;
+    border-radius: 0.75rem;
+    transition: background 0.2s ease;
+    position: relative;
+  }
+  .schedule-item:hover { background: rgba(255,180,84,0.05); }
+
+  .schedule-dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .glow-teal   { box-shadow: 0 0 8px rgba(94,234,212,0.8); }
+  .glow-amber  { box-shadow: 0 0 8px rgba(255,180,84,0.8); }
+
+  .schedule-connector {
+    position: absolute;
+    left: calc(1rem + 4.2rem + 1rem + 4px);
+    top: calc(0.875rem + 9px);
+    bottom: -0.875rem;
+    width: 1px;
+    background: rgba(255,255,255,0.05);
+  }
+  .schedule-item:last-child .schedule-connector { display: none; }
+
+  /* ── Badge ── */
+  .badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 0.22rem 0.65rem;
+    border-radius: 999px;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+  }
+
+  /* ── Donut ── */
+  .donut-ring {
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: conic-gradient(
+      #FFB454 0% 40%,
+      #5EEAD4 40% 70%,
+      #A78BFA 70% 90%,
+      #F87171 90% 100%
+    );
+    position: relative;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 14px rgba(255,180,84,0.25));
+  }
+  .donut-hole {
+    position: absolute;
+    inset: 22px;
+    background: #0F0E28;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── Legend ── */
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .legend-row { display: flex; align-items: center; justify-content: space-between; padding: 0.3rem 0; }
+  .legend-bar-track {
+    height: 3px; border-radius: 999px;
+    background: rgba(255,255,255,0.06);
+    flex: 1; margin: 0 0.75rem; overflow: hidden;
+  }
+  .legend-bar-fill { height: 100%; border-radius: 999px; }
+
+  /* ── Trip cards ── */
+  .trip-card {
+    border-radius: 1rem;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.06);
+    position: relative;
+    transition: transform 0.25s ease, border-color 0.25s ease;
+  }
+  .trip-card:hover { transform: translateY(-3px); border-color: rgba(94,234,212,0.25); }
+  .trip-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(105deg, rgba(11,10,35,0.92) 35%, rgba(11,10,35,0.35) 100%);
+  }
+
+  /* ── Section heading ── */
+  .section-heading {
+    color: #C7C4E6;
+    font-weight: 600;
+    font-size: 1rem;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .view-all {
+    color: #FFB454;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+  }
+  .view-all:hover { opacity: 1; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="background:#0F0E28; min-height:100vh; font-family:'Inter',sans-serif; position:relative; overflow-x:hidden;">
+
+  <!-- ── Bouncing balls ── -->
+  <div class="ball" style="
+    width:320px; height:320px;
+    background:rgba(83,74,183,0.22);
+    top:10%; left:5%;
+    --tx1: 60vw; --ty1: 20vh;
+    --tx2: 30vw; --ty2: 60vh;
+    --tx3: 70vw; --ty3: 40vh;
+    animation-duration: 18s;">
+  </div>
+
+  <div class="ball" style="
+    width:260px; height:260px;
+    background:rgba(94,234,212,0.1);
+    top:50%; right:8%;
+    --tx1: -40vw; --ty1: -20vh;
+    --tx2: -20vw; --ty2: 30vh;
+    --tx3: -55vw; --ty3: 10vh;
+    animation-duration: 22s;">
+  </div>
+
+  <div class="ball" style="
+    width:200px; height:200px;
+    background:rgba(167,139,250,0.15);
+    bottom:10%; left:40%;
+    --tx1: 20vw;  --ty1: -30vh;
+    --tx2: -30vw; --ty2: -50vh;
+    --tx3: 10vw;  --ty3: -20vh;
+    animation-duration: 15s;">
+  </div>
+
+  <div class="ball" style="
+    width:180px; height:180px;
+    background:rgba(248,113,113,0.1);
+    top:30%; left:50%;
+    --tx1: -30vw; --ty1: 30vh;
+    --tx2: 20vw;  --ty2: -20vh;
+    --tx3: -10vw; --ty3: 40vh;
+    animation-duration: 25s;">
+  </div>
+
+  <div class="ball" style="
+    width:150px; height:150px;
+    background:rgba(255,180,84,0.1);
+    top:70%; left:20%;
+    --tx1: 50vw;  --ty1: -40vh;
+    --tx2: 10vw;  --ty2: -60vh;
+    --tx3: 40vw;  --ty3: -20vh;
+    animation-duration: 20s;">
+  </div>
+
+  <!-- ── Content ── -->
+  <div style="position:relative; z-index:1; max-width:56rem; margin:0 auto; padding:2rem 1.25rem 4rem;">
+
+    <!-- Top bar -->
+    <div class="flex justify-between items-start mb-8">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-widest mb-1" style="color:#5EEAD4; letter-spacing:0.1em;">
+          <span id="date-label"></span>
+        </p>
+        <h2 class="text-2xl md:text-3xl font-bold" style="font-family:'Space Grotesk',sans-serif; color:#E8E6FF; line-height:1.2;">
+          <span id="greeting"></span>, Ankit! 👋
+        </h2>
+        <p class="text-sm mt-1" style="color:#6B6892;">Have a productive day ahead.</p>
+      </div>
+      <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#A78BFA,#5EEAD4);display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:700;color:#0F0E28;font-family:'Space Grotesk',sans-serif;flex-shrink:0;margin-top:4px;">AN</div>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div class="stat-card amber p-4">
+        <p class="text-xs font-medium mb-3" style="color:#7C79A6;">Tasks</p>
+        <p class="text-3xl font-bold" style="font-family:'Space Grotesk',sans-serif; color:#FFB454;">12</p>
+        <p class="text-xs mt-1" style="color:#6B6892;">4 due today</p>
+        <div class="micro-bar"><div class="micro-bar-fill" style="width:65%;background:linear-gradient(90deg,#FFB454,#FF8C42);"></div></div>
+      </div>
+      <div class="stat-card teal p-4">
+        <p class="text-xs font-medium mb-3" style="color:#7C79A6;">Budget</p>
+        <p class="text-3xl font-bold" style="font-family:'Space Grotesk',sans-serif; color:#5EEAD4;">₹15k</p>
+        <p class="text-xs mt-1" style="color:#6B6892;">Left this month</p>
+        <div class="micro-bar"><div class="micro-bar-fill" style="width:40%;background:linear-gradient(90deg,#5EEAD4,#38BDF8);"></div></div>
+      </div>
+      <div class="stat-card purple p-4">
+        <p class="text-xs font-medium mb-3" style="color:#7C79A6;">Trips</p>
+        <p class="text-3xl font-bold" style="font-family:'Space Grotesk',sans-serif; color:#A78BFA;">2</p>
+        <p class="text-xs mt-1" style="color:#6B6892;">Planned ahead</p>
+        <div class="micro-bar"><div class="micro-bar-fill" style="width:30%;background:linear-gradient(90deg,#A78BFA,#818CF8);"></div></div>
+      </div>
+      <div class="stat-card red p-4">
+        <p class="text-xs font-medium mb-3" style="color:#7C79A6;">Notes</p>
+        <p class="text-3xl font-bold" style="font-family:'Space Grotesk',sans-serif; color:#F87171;">25</p>
+        <p class="text-xs mt-1" style="color:#6B6892;">3 pinned</p>
+        <div class="micro-bar"><div class="micro-bar-fill" style="width:80%;background:linear-gradient(90deg,#F87171,#FB923C);"></div></div>
+      </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+
+      <a href="#" class="quick-card q-amber">
+        <div class="quick-icon" style="background:rgba(255,180,84,0.12);">✅</div>
+        <p class="text-sm font-semibold" style="color:#C7C4E6;font-family:'Space Grotesk',sans-serif;">Add Task</p>
+        <p class="text-xs" style="color:#6B6892;">Create a new task</p>
+      </a>
+
+      <a href="#" class="quick-card q-teal">
+        <div class="quick-icon" style="background:rgba(94,234,212,0.12);">📝</div>
+        <p class="text-sm font-semibold" style="color:#C7C4E6;font-family:'Space Grotesk',sans-serif;">New Note</p>
+        <p class="text-xs" style="color:#6B6892;">Jot something down</p>
+      </a>
+
+      <a href="#" class="quick-card q-purple">
+        <div class="quick-icon" style="background:rgba(167,139,250,0.12);">💸</div>
+        <p class="text-sm font-semibold" style="color:#C7C4E6;font-family:'Space Grotesk',sans-serif;">Log Spend</p>
+        <p class="text-xs" style="color:#6B6892;">Track an expense</p>
+      </a>
+
+      <a href="#" class="quick-card q-red">
+        <div class="quick-icon" style="background:rgba(248,113,113,0.12);">✈️</div>
+        <p class="text-sm font-semibold" style="color:#C7C4E6;font-family:'Space Grotesk',sans-serif;">Plan Trip</p>
+        <p class="text-xs" style="color:#6B6892;">Add a destination</p>
+      </a>
+
+    </div>
+
+    <!-- Schedule + Month Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+
+      <!-- Today's Schedule -->
+      <div class="glass-card p-5">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="section-heading">Today's Schedule</h3>
+          <a href="#" class="view-all">View All →</a>
+        </div>
+        <div>
+
+          <div class="schedule-item" style="position:relative;">
+            <div class="schedule-connector"></div>
+            <span class="text-xs flex-shrink-0" style="width:4.2rem;font-family:'JetBrains Mono',monospace;color:#6B6892;">08:00 AM</span>
+            <span class="schedule-dot glow-teal" style="background:#5EEAD4;"></span>
+            <span class="flex-1 text-sm" style="color:#C7C4E6;">🏋️ Gym Workout</span>
+            <span class="badge" style="background:rgba(94,234,212,0.12);color:#5EEAD4;">Done</span>
+          </div>
+
+          <div class="schedule-item" style="position:relative;">
+            <div class="schedule-connector"></div>
+            <span class="text-xs flex-shrink-0" style="width:4.2rem;font-family:'JetBrains Mono',monospace;color:#6B6892;">09:00 AM</span>
+            <span class="schedule-dot glow-amber" style="background:#FFB454;"></span>
+            <span class="flex-1 text-sm" style="color:#C7C4E6;">💼 Office Work</span>
+            <span class="badge" style="background:rgba(255,180,84,0.15);color:#FFB454;">Active</span>
+          </div>
+
+          <div class="schedule-item" style="position:relative;">
+            <div class="schedule-connector"></div>
+            <span class="text-xs flex-shrink-0" style="width:4.2rem;font-family:'JetBrains Mono',monospace;color:#6B6892;">01:00 PM</span>
+            <span class="schedule-dot" style="background:#3D3A5C;"></span>
+            <span class="flex-1 text-sm" style="color:#6B6892;">🥗 Lunch Break</span>
+            <span class="badge" style="background:rgba(255,255,255,0.05);color:#6B6892;">Soon</span>
+          </div>
+
+          <div class="schedule-item" style="position:relative;">
+            <div class="schedule-connector"></div>
+            <span class="text-xs flex-shrink-0" style="width:4.2rem;font-family:'JetBrains Mono',monospace;color:#6B6892;">02:00 PM</span>
+            <span class="schedule-dot" style="background:#3D3A5C;"></span>
+            <span class="flex-1 text-sm" style="color:#6B6892;">📊 Project Work</span>
+            <span class="badge" style="background:rgba(255,255,255,0.05);color:#6B6892;">Later</span>
+          </div>
+
+          <div class="schedule-item" style="position:relative;">
+            <div class="schedule-connector"></div>
+            <span class="text-xs flex-shrink-0" style="width:4.2rem;font-family:'JetBrains Mono',monospace;color:#6B6892;">07:00 PM</span>
+            <span class="schedule-dot" style="background:#3D3A5C;"></span>
+            <span class="flex-1 text-sm" style="color:#6B6892;">💻 DSA Practice</span>
+            <span class="badge" style="background:rgba(255,255,255,0.05);color:#6B6892;">Later</span>
+          </div>
+
+          <div class="schedule-item">
+            <span class="text-xs flex-shrink-0" style="width:4.2rem;font-family:'JetBrains Mono',monospace;color:#6B6892;">10:00 PM</span>
+            <span class="schedule-dot" style="background:#3D3A5C;"></span>
+            <span class="flex-1 text-sm" style="color:#6B6892;">📚 Reading Time</span>
+            <span class="badge" style="background:rgba(255,255,255,0.05);color:#6B6892;">Later</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Month Overview -->
+      <div class="glass-card p-5">
+        <div class="flex justify-between items-center mb-5">
+          <h3 class="section-heading">This Month</h3>
+          <a href="#" class="view-all">View All →</a>
+        </div>
+        <div class="flex justify-center mb-5">
+          <div class="donut-ring">
+            <div class="donut-hole">
+              <p class="text-sm font-bold" style="font-family:'Space Grotesk',sans-serif;color:#E8E6FF;line-height:1;">₹10k</p>
+              <p style="font-size:0.65rem;color:#6B6892;margin-top:2px;">spent</p>
+            </div>
+          </div>
+        </div>
+        <p class="text-xs text-center mb-4" style="color:#6B6892;">of <span style="color:#C7C4E6;font-weight:600;">₹25,000</span> monthly budget</p>
+        <div class="space-y-2">
+          <div class="legend-row">
+            <div class="flex items-center gap-2" style="min-width:5rem;"><span class="legend-dot" style="background:#FFB454;"></span><span class="text-xs" style="color:#7C79A6;">Food</span></div>
+            <div class="legend-bar-track"><div class="legend-bar-fill" style="width:40%;background:#FFB454;"></div></div>
+            <span class="text-xs font-semibold" style="color:#C7C4E6;min-width:2.5rem;text-align:right;">40%</span>
+          </div>
+          <div class="legend-row">
+            <div class="flex items-center gap-2" style="min-width:5rem;"><span class="legend-dot" style="background:#5EEAD4;"></span><span class="text-xs" style="color:#7C79A6;">Travel</span></div>
+            <div class="legend-bar-track"><div class="legend-bar-fill" style="width:30%;background:#5EEAD4;"></div></div>
+            <span class="text-xs font-semibold" style="color:#C7C4E6;min-width:2.5rem;text-align:right;">30%</span>
+          </div>
+          <div class="legend-row">
+            <div class="flex items-center gap-2" style="min-width:5rem;"><span class="legend-dot" style="background:#A78BFA;"></span><span class="text-xs" style="color:#7C79A6;">Shopping</span></div>
+            <div class="legend-bar-track"><div class="legend-bar-fill" style="width:20%;background:#A78BFA;"></div></div>
+            <span class="text-xs font-semibold" style="color:#C7C4E6;min-width:2.5rem;text-align:right;">20%</span>
+          </div>
+          <div class="legend-row">
+            <div class="flex items-center gap-2" style="min-width:5rem;"><span class="legend-dot" style="background:#F87171;"></span><span class="text-xs" style="color:#7C79A6;">Bills</span></div>
+            <div class="legend-bar-track"><div class="legend-bar-fill" style="width:10%;background:#F87171;"></div></div>
+            <span class="text-xs font-semibold" style="color:#C7C4E6;min-width:2.5rem;text-align:right;">10%</span>
+          </div>
+        </div>
+        <div class="mt-4" style="height:5px;border-radius:999px;background:rgba(255,255,255,0.06);overflow:hidden;">
+          <div style="height:100%;width:60%;border-radius:999px;background:linear-gradient(90deg,#FFB454,#5EEAD4);"></div>
+        </div>
+        <p class="text-xs mt-1.5" style="color:#6B6892;">60% of budget used</p>
+      </div>
+
+    </div>
+
+    <!-- Upcoming Trips -->
+    <div class="glass-card p-5">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="section-heading">Upcoming Trips</h3>
+        <a href="#" class="view-all">View All →</a>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <div class="trip-card" style="height:110px;">
+          <img src="https://images.unsplash.com/photo-1599661046289-e31897846e41?w=800&q=80" alt="Udaipur" class="w-full h-full object-cover">
+          <div class="trip-overlay"></div>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 1.25rem;">
+            <div>
+              <p class="font-semibold text-sm" style="font-family:'Space Grotesk',sans-serif;color:#E8E6FF;">Udaipur Trip</p>
+              <p class="text-xs mt-1" style="color:#7C79A6;font-family:'JetBrains Mono',monospace;">18 – 21 Jun 2025</p>
+            </div>
+            <span class="badge" style="background:rgba(94,234,212,0.15);color:#5EEAD4;border:1px solid rgba(94,234,212,0.25);">Planned</span>
+          </div>
+        </div>
+
+        <div class="trip-card" style="height:110px;">
+          <img src="https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=800&q=80" alt="Jaipur" class="w-full h-full object-cover">
+          <div class="trip-overlay"></div>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 1.25rem;">
+            <div>
+              <p class="font-semibold text-sm" style="font-family:'Space Grotesk',sans-serif;color:#E8E6FF;">Jaipur Trip</p>
+              <p class="text-xs mt-1" style="color:#7C79A6;font-family:'JetBrains Mono',monospace;">05 – 07 Jul 2025</p>
+            </div>
+            <span class="badge" style="background:rgba(167,139,250,0.15);color:#A78BFA;border:1px solid rgba(167,139,250,0.25);">Upcoming</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const h = new Date().getHours();
+  document.getElementById('greeting').textContent =
+    h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening';
+
+  const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const now    = new Date();
+  document.getElementById('date-label').textContent =
+    `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+</script>
+{% endblock %}
